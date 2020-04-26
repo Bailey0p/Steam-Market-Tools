@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+
+{% block head %}
+<title>{{ alldata[0][0] }}</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@2.8.0"></script>
+
+<style>
+h1 {text-align: center;}
+p {text-align: center;}
+</style>
+
+{% endblock %}
+
+{% block body %}
+<h1 style="color:#cde3fe">{{ alldata[0][0] }}</h1>
+<div class="whitebox" style="width:800px; margin:0 auto;">
+<canvas id="myChart"></canvas>
+<script type="text/javascript">
+  var ctx = document.getElementById('myChart').getContext('2d');
+var chart = new Chart(ctx, {
+    // The type of chart we want to create
+    type: 'line',
+
+    // The data for our dataset
+    data: {
+      labels : [{% for item in date_data %}
+         "{{item}}",
+        {% endfor %}],
+        datasets: [{
+            label: '{{ alldata[0][0] }}',
+            borderColor: 'rgb(26, 26, 255)',
+            data: {{ price_data }}
+        }]
+    },
+
+    // Configuration options go here
+    options: {}
+});
+</script>
+
+</div>
+
+<p style="color:#cde3fe">Change since {{ date_data[0] }}: {{ oldest_change }}%</p>
+<p style="color:#cde3fe">Change since {{ date_data[-2] }}: {{ newest_change }}%</p>
+
+
+{% endblock %}
