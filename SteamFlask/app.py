@@ -36,10 +36,14 @@ def get_Percent_change(old, new):
     number = ((float(new)-old)/abs(old))*100
     return round(number, 3)
 
-@app.route('/')
+@app.route('/', methods=['GET','POST'])
 def index():
-
-    return render_template('index.html')
+    if request.method == 'POST':
+        thing = request.form['Search']
+        print(thing)
+        return redirect('/item/:thing',{'thing':thing})
+    else:
+        return render_template('index.html')
 
 @app.route('/Table', methods=['GET', 'POST'])
 def Table():
