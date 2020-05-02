@@ -8,16 +8,9 @@ import time
 from datetime import datetime
 import json
 
-
-
 colorama.init()
-
-# Print the clear screen code '\033[2J'
 print('\033[2J')
-
-
 print(Fore.MAGENTA+ 'Welcome To CSGO Steam Market Tools'+ Style.RESET_ALL)
-
 
 conn = sqlite3.connect('CSGO.db')
 
@@ -27,14 +20,21 @@ df = pd.read_sql('Select * From items;', conn)
 
 names = []
 
-def sif(e):
-    return[e[1]]
+currency = "USD"
+currency_json = []
+currency_list = ['CAD','HKD','ISK','PHP','DKK','HUF','CZK','GBP','RON','SEK','IDR','INR','BRL','RUB','HRK','JPY','THB','CHF','EUR','MYR','BGN','TRY','CNY','NOK','NZD','ZAR','USD','MXN','SGD','AUD','ILS','KRW','PLN']
+def get_currency():
+    global currency_json
+    currency_json = requests.get("https://api.exchangeratesapi.io/latest?base=USD").json()
 
+get_currency()
+
+def sif(e):
+    return[e[1]]#1,2 or 3?
 
 def get_Percent_change(old, new):
     h = ((float(new)-old)/abs(old))*100
     return round(h, 3)
-
 
 otnvalues = []
 ntsnvalues = []
@@ -46,54 +46,44 @@ def get_change(percent, min_price, contains_or_full):#false = the dataset is alo
 
             names.append(i[0])
 
-
-
-
     for x in names:
         above_price = []
         above_volume = []
         try:
             data = df[df['name'] == x]
-
             for i in range(len(data)):
                 if data.iloc[i][2] <= min_price:
                     above_price.append(0)
-
-
                 else:
                     above_price.append(1)
 
-
             result = True
 
-            # print(above_price.count(0))
-            # print(len(above_price))
             if above_price.count(0) == len(above_price):
-
                 result = False
 
-
             elif 0 in above_price and contains_or_full == False:
-
                 result = True
 
             elif 0 in above_price and contains_or_full == True:
-
                 result = False
-
-
-
 
             if result == True:
                 otn = get_Percent_change(data.iloc[0][2], data.iloc[-1][2])
                 ntsn = get_Percent_change(data.iloc[-2][2],data.iloc[-1][2])
 
                 if otn > percent or otn < -percent:
-                    otnvalues.append(x+": "+str(otn))
+                    i = []
+                    i.append(x+": ")
+                    i.append(otn)
+                    otnvalues.append(i)
                     print(x+": "+str(otn))
 
                 if ntsn > percent or ntsn < -percent:
-                    ntsnvalues.append(x+": "+str(ntsn))
+                    i = []
+                    i.append(x+': ')
+                    i.append(ntsn)
+                    ntsnvalues.append(i)
                     print(x+": "+str(ntsn))
             else:
                 pass
@@ -115,7 +105,6 @@ def makedb():
         conn.commit()
     except sqlite3.OperationalError:
         print("Error db already exists")
-
 
 def populatedb():
     try:
@@ -149,8 +138,6 @@ def populatedb():
                 time.sleep(0.5)
     conn.close()
 
-
-
 class csgo_item:
     def __init__(self, name, date, lowestsell, sellamount, icon):
         self.name = name
@@ -165,30 +152,52 @@ def insert_item(item):
 
 
 def boolinput(txt):
+
     x = input(txt)
-    if x == '1':
+
+    if x == 'n' or 'N' or 'No' or 'No':
         return False
-    if x == '0':
+
+    if x == 'y' or 'yes' or 'Yes' or 'Yes' :
         return True
 
 def info():
-        print(Fore.CYAN + 'Commands:')
+        print(Fore.GREEN + "currency is: "+ currency)
+        print('Commands:')
         print("1 Make a new database if one does not exist")
-        print('2 Populate the database (this can take up to several hours)')
+        print('2 Populate the database (this can take up to several hours)(requires internet)')
         print("3 Get percent changes of items in the db")
-        print("4 exit"+ Style.RESET_ALL)
+        print("4 do a custom item search")
+        print("5 Change the currency (requires internet)")
+        print("6 exit"+ Style.RESET_ALL)
 
 def start():
+    global currency
+    global currency_json
+    global currency_list
     info()
     while True:
-        x = input(Fore.GREEN+ "$:"+ Style.RESET_ALL)
+        x = input("$:")
 
         if x == '1':
             makedb()
             info()
         elif x == '2':
-            populatedb()
-            info()
+            x = input(Fore.RED +"WARNING Are you sure you want to continue?\nThis oeration can take up to several hours and aborting partway through\n will result in an incomplete dataset\ny/n?"+ Style.RESET_ALL)
+            while True:
+                if x == "y":
+                    populatedb()
+                    info()
+                    break
+
+
+                elif x == "n":
+                    info()
+                    break
+
+                else:
+                    print("Error could not interpret user input")
+                    x = input(Fore.RED +"WARNING Are you sure you want to continue?\nThis oeration can take up to several hours and aborting partway through\n will result in an incomplete dataset\ny/n?"+ Style.RESET_ALL)
 
         elif x == '3':
             min_percent_ = input(Fore.BLUE + "Enter the minimum change in percent: ")
@@ -209,14 +218,46 @@ def start():
             print(Style.RESET_ALL)
             info()
 
-        elif x == '4':
+        elif x =='4':
+
+            name = input("Please Enter an items name:\n")
+            with conn:
+                c.execute("SELECT * FROM items WHERE name=:name",{'name':name})
+                data = c.fetchall()
+
+            hc = False
+            colour = False
+            for x in data:
+                add = 0
+
+                if hc == False:
+                    print("        Date        |"+"Price"+"| Volume")
+                    hc = True
+
+                if colour == False:
+                    print(Fore.CYAN,end='')
+                    colour = True
+                elif colour == True:
+                    print(Fore.BLUE,end='')
+                    colour = False
+                print(str(datetime.fromtimestamp(x[1]))+" | "+str(round((x[2]/100)*currency_json['rates'][currency],2))+" | "+str(x[3]))
+                print(Style.RESET_ALL,end='')
+
+            info()
+        elif x == '5':
+
+            print("Please Select a currency (Enter 3-Letter Tag)")
+            print("1  CAD\n2  HKD\n3  ISK\n4  PHP\n5  DKK\n6  HUF\n7  CZK\n8  GBP\n9  RON\n10 SEK\n11 IDR\n12 INR\n13 BRL\n14 RUB\n15 HRK\n16 JPY\n17 THB\n18 CHF\n19 EUR\n20 MYR\n21 BGN\n22 TRY\n23 CNY\n24 NOK\n25 NZD\n26 ZAR\n27 USD\n28 MXN\n29 SGD\n30 AUD\n31 ILS\n32 KRW\n33 PLN")
+            i = input("?: ")
+            if i in currency_list:
+                currency = i
+            get_currency()
+            info()
+
+        elif x == '6':
             print("exiting...")
             conn.close()
-            exit()#or break
-
-
-
-#get_change(10, 10000, False)
+            exit()
 
 if __name__ == '__main__':
     start()
