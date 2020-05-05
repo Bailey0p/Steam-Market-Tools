@@ -29,8 +29,7 @@ def get_currency():
 
 get_currency()
 
-def sif(e):
-    return[e[1]]#1,2 or 3?
+
 
 def get_Percent_change(old, new):
     h = ((float(new)-old)/abs(old))*100
@@ -92,51 +91,9 @@ def get_change(percent, min_price, contains_or_full):#false = the dataset is alo
             #print('INDEX ERROR (the item probably does not have enough data (3 peices minimum)in the db, try adding more )')
             pass
 
-def makedb():
-    try:
-        c.execute("""CREATE TABLE items (
-                            name text,
-                            date integer,
-                            lowestsell integer,
-                            sellamount integer,
-                            icon string
-                            )""")
-
-        conn.commit()
-    except sqlite3.OperationalError:
-        print("Error db already exists")
-
-def populatedb():
-    try:
-        r = requests.get("https://steamcommunity.com/market/search/render/?query=&start=0&count=10&search_descriptions=0&sort_column=popular&norender=1&sort_dir=desc%26count%3D100&appid=730")
-        total = r.json()
-        total = total["total_count"]
-        total = int(total/100)
-    except TypeError:
-        print(f"TypeError most likely steam search api still on cooldown time: {datetime.now()}")
-        print("waiting 5 minutes")
-        time.sleep(300)
-    for x in range(total+1):#duplicates?
-
-        passed = False
-        while passed == False:
-            try:
-                r = requests.get("https://steamcommunity.com/market/search/render/?query=&start="+str(x*100)+"&count=100&search_descriptions=0&sort_column=popular&currency=21&norender=1&country=AU&sort_dir=desc%26count%3D100&appid=730")
-                data = r.json()
-                for i in range(100):
-                    print("name: "+str(data["results"][i]["name"]))
 
 
-                    temp_item = csgo_item(data["results"][i]["name"].replace('|', ''), int(datetime.timestamp(datetime.now())), data["results"][i]["sell_price"], data["results"][i]["sell_listings"], data["results"][i]["asset_description"]["icon_url_large"])
-                    insert_item(temp_item)
-                    conn.commit()
-                print("\n")
-                passed = True
-            except TypeError:
-                time.sleep(0.5)
-            except IndexError:
-                time.sleep(0.5)
-    conn.close()
+
 
 class csgo_item:
     def __init__(self, name, date, lowestsell, sellamount, icon):
@@ -145,6 +102,65 @@ class csgo_item:
         self.lowestsell = lowestsell
         self.sellamount = sellamount
         self.icon =icon
+
+    def sif(e):
+        return[e[1]]#1,2 or 3?
+
+    def info():
+            print(Fore.GREEN + "currency is: "+ currency)
+            print('Commands:')
+            print("1 Make a new database if one does not exist")
+            print('2 Populate the database (this can take up to several hours)(requires internet)')
+            print("3 Get percent changes of items in the db")
+            print("4 do a custom item search")
+            print("5 Change the currency (requires internet)")
+            print("6 exit"+ Style.RESET_ALL)
+
+    def makedb():
+        try:
+            c.execute("""CREATE TABLE items (
+                                name text,
+                                date integer,
+                                lowestsell integer,
+                                sellamount integer,
+                                icon string
+                                )""")
+
+            conn.commit()
+        except sqlite3.OperationalError:
+            print("Error db already exists")
+
+    def populatedb():
+        try:
+            r = requests.get("https://steamcommunity.com/market/search/render/?query=&start=0&count=10&search_descriptions=0&sort_column=popular&norender=1&sort_dir=desc%26count%3D100&appid=730")
+            total = r.json()
+            total = total["total_count"]
+            total = int(total/100)
+        except TypeError:
+            print(f"TypeError most likely steam search api still on cooldown time: {datetime.now()}")
+            print("waiting 5 minutes")
+            time.sleep(300)
+        for x in range(total+1):#duplicates?
+
+            passed = False
+            while passed == False:
+                try:
+                    r = requests.get("https://steamcommunity.com/market/search/render/?query=&start="+str(x*100)+"&count=100&search_descriptions=0&sort_column=popular&currency=21&norender=1&country=AU&sort_dir=desc%26count%3D100&appid=730")
+                    data = r.json()
+                    for i in range(100):
+                        print("name: "+str(data["results"][i]["name"]))
+
+
+                        temp_item = csgo_item(data["results"][i]["name"].replace('|', ''), int(datetime.timestamp(datetime.now())), data["results"][i]["sell_price"], data["results"][i]["sell_listings"], data["results"][i]["asset_description"]["icon_url_large"])
+                        insert_item(temp_item)
+                        conn.commit()
+                    print("\n")
+                    passed = True
+                except TypeError:
+                    time.sleep(0.5)
+                except IndexError:
+                    time.sleep(0.5)
+        conn.close()
 
 def insert_item(item):
     with conn:
@@ -161,38 +177,30 @@ def boolinput(txt):
     if x == 'y' or 'yes' or 'Yes' or 'Yes' :
         return True
 
-def info():
-        print(Fore.GREEN + "currency is: "+ currency)
-        print('Commands:')
-        print("1 Make a new database if one does not exist")
-        print('2 Populate the database (this can take up to several hours)(requires internet)')
-        print("3 Get percent changes of items in the db")
-        print("4 do a custom item search")
-        print("5 Change the currency (requires internet)")
-        print("6 exit"+ Style.RESET_ALL)
+
 
 def start():
     global currency
     global currency_json
     global currency_list
-    info()
+    csgo_item.info()
     while True:
         x = input("$:")
 
         if x == '1':
-            makedb()
-            info()
+            csgo_item.makedb()
+            csgo_item.info()
         elif x == '2':
             x = input(Fore.RED +"WARNING Are you sure you want to continue?\nThis oeration can take up to several hours and aborting partway through\n will result in an incomplete dataset\ny/n?"+ Style.RESET_ALL)
             while True:
                 if x == "y":
-                    populatedb()
-                    info()
+                    csgo_item.populatedb()
+                    csgo_item.info()
                     break
 
 
                 elif x == "n":
-                    info()
+                    csgo_item.info()
                     break
 
                 else:
@@ -205,8 +213,8 @@ def start():
             accept_ = boolinput('Enter wheather you want each item to allow a few items under the price limit (0=y, 1=n): '+ Style.RESET_ALL)
             get_change(int(min_percent_), int(min_price_), accept_)
             print(Fore.RED +'Change From Oldest Values To newest Values\n'+ Style.RESET_ALL)
-            otnvalues.sort(key=sif)
-            ntsnvalues.sort(key=sif)
+            otnvalues.sort(key=csgo_item.sif)
+            ntsnvalues.sort(key=csgo_item.sif)
             print(Fore.YELLOW)
             for x in otnvalues:
                 print(x)
@@ -216,7 +224,7 @@ def start():
             for x in ntsnvalues:
                 print(x)
             print(Style.RESET_ALL)
-            info()
+            csgo_item.info()
 
         elif x =='4':
 
@@ -243,7 +251,7 @@ def start():
                 print(str(datetime.fromtimestamp(x[1]))+" | "+str(round((x[2]/100)*currency_json['rates'][currency],2))+" | "+str(x[3]))
                 print(Style.RESET_ALL,end='')
 
-            info()
+            csgo_item.info()
         elif x == '5':
 
             print("Please Select a currency (Enter 3-Letter Tag)")
@@ -252,7 +260,7 @@ def start():
             if i in currency_list:
                 currency = i
             get_currency()
-            info()
+            csgo_item.info()
 
         elif x == '6':
             print("exiting...")
