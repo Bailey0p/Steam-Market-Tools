@@ -6,7 +6,13 @@ import requests
 import re
 import time
 from datetime import datetime
+from datetime import date
 import json
+
+import termplotlib as tpl
+import numpy
+
+
 
 colorama.init()
 print('\033[2J')
@@ -183,6 +189,7 @@ def start():
     global currency
     global currency_json
     global currency_list
+
     csgo_item.info()
     while True:
         x = input("$:")
@@ -227,19 +234,37 @@ def start():
             csgo_item.info()
 
         elif x =='4':
+            x2 = []
+            y2 = []
+
+
 
             name = input("Please Enter an items name:\n")
+            name = name.replace("|",'')
+
             with conn:
                 c.execute("SELECT * FROM items WHERE name=:name",{'name':name})
                 data = c.fetchall()
 
+            if len(data) == 0:
+                print(Fore.RED +"Sorry could no find that item in the database\nPLEASE INCLUDE THE CONDITION IN BRACKETS\nAK-47 | Uncharted becomes\nAK-47  Uncharted (Field-Tested)"+ Style.RESET_ALL)
+                continue
+
+
             hc = False
             colour = False
+            nint = 0
             for x in data:
+
+                y2.append(round((x[2]/100)*currency_json['rates'][currency],2))
+
+                x2.append(nint)
+                nint += 1
+
                 add = 0
 
                 if hc == False:
-                    print("        Date        |"+"Price"+"| Volume")
+                    print("        Date        |"+"Price "+"| Volume")
                     hc = True
 
                 if colour == False:
@@ -251,7 +276,12 @@ def start():
                 print(str(datetime.fromtimestamp(x[1]))+" | "+str(round((x[2]/100)*currency_json['rates'][currency],2))+" | "+str(x[3]))
                 print(Style.RESET_ALL,end='')
 
+
+            fig = tpl.figure()
+            fig.plot(x2, y2, label="price", width=120, height=30)
+            fig.show()
             csgo_item.info()
+
         elif x == '5':
 
             print("Please Select a currency (Enter 3-Letter Tag)")
