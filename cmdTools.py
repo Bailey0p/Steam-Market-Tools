@@ -154,7 +154,7 @@ class csgo_item:
                     r = requests.get("https://steamcommunity.com/market/search/render/?query=&start="+str(x*100)+"&count=100&search_descriptions=0&sort_column=popular&currency=21&norender=1&country=AU&sort_dir=desc%26count%3D100&appid=730")
                     data = r.json()
                     for i in range(100):
-                        print("name: "+str(data["results"][i]["name"]))
+                        print(Fore.YELLOW+"name: "+str(data["results"][i]["name"])+ Style.RESET_ALL)
 
 
                         temp_item = csgo_item(data["results"][i]["name"].replace('|', ''), int(datetime.timestamp(datetime.now())), data["results"][i]["sell_price"], data["results"][i]["sell_listings"], data["results"][i]["asset_description"]["icon_url_large"])
