@@ -8,11 +8,8 @@ import time
 from datetime import datetime
 from datetime import date
 import json
-
 import termplotlib as tpl
 import numpy
-
-
 
 colorama.init()
 print('\033[2J')
@@ -35,8 +32,6 @@ def get_currency():
 
 get_currency()
 
-
-
 def get_Percent_change(old, new):
     h = ((float(new)-old)/abs(old))*100
     return round(h, 3)
@@ -48,9 +43,7 @@ def get_change(percent, min_price, contains_or_full):#false = the dataset is alo
         c.execute("SELECT DISTINCT name FROM items")
         x = c.fetchall()
         for i in x:
-
             names.append(i[0])
-
     for x in names:
         above_price = []
         above_volume = []
@@ -61,9 +54,7 @@ def get_change(percent, min_price, contains_or_full):#false = the dataset is alo
                     above_price.append(0)
                 else:
                     above_price.append(1)
-
             result = True
-
             if above_price.count(0) == len(above_price):
                 result = False
 
@@ -76,7 +67,6 @@ def get_change(percent, min_price, contains_or_full):#false = the dataset is alo
             if result == True:
                 otn = get_Percent_change(data.iloc[0][2], data.iloc[-1][2])
                 ntsn = get_Percent_change(data.iloc[-2][2],data.iloc[-1][2])
-
                 if otn > percent or otn < -percent:
                     i = []
                     i.append(x+": ")
@@ -92,14 +82,9 @@ def get_change(percent, min_price, contains_or_full):#false = the dataset is alo
                     print(x+": "+str(ntsn))
             else:
                 pass
-
         except IndexError:
-            #print('INDEX ERROR (the item probably does not have enough data (3 peices minimum)in the db, try adding more )')
+            print('INDEX ERROR (the item probably does not have enough data (3 peices minimum)in the db, try adding more )')
             pass
-
-
-
-
 
 class csgo_item:
     def __init__(self, name, date, lowestsell, sellamount, icon):
@@ -147,7 +132,6 @@ class csgo_item:
             print("waiting 5 minutes")
             time.sleep(300)
         for x in range(total+1):#duplicates?
-
             passed = False
             while passed == False:
                 try:
@@ -155,8 +139,6 @@ class csgo_item:
                     data = r.json()
                     for i in range(100):
                         print(Fore.YELLOW+"name: "+str(data["results"][i]["name"])+ Style.RESET_ALL)
-
-
                         temp_item = csgo_item(data["results"][i]["name"].replace('|', ''), int(datetime.timestamp(datetime.now())), data["results"][i]["sell_price"], data["results"][i]["sell_listings"], data["results"][i]["asset_description"]["icon_url_large"])
                         insert_item(temp_item)
                         conn.commit()
@@ -172,28 +154,20 @@ def insert_item(item):
     with conn:
         c.execute("INSERT INTO items VALUES (:name, :date, :lowestsell, :sellamount, :icon)", (item.name, item.date, item.lowestsell, item.sellamount, item.icon))
 
-
 def boolinput(txt):
-
     x = input(txt)
-
     if x == 'n' or 'N' or 'No' or 'No':
         return False
-
     if x == 'y' or 'yes' or 'Yes' or 'Yes' :
         return True
-
-
 
 def start():
     global currency
     global currency_json
     global currency_list
-
     csgo_item.info()
     while True:
         x = input("$:")
-
         if x == '1':
             csgo_item.makedb()
             csgo_item.info()
@@ -204,12 +178,9 @@ def start():
                     csgo_item.populatedb()
                     csgo_item.info()
                     break
-
-
                 elif x == "n":
                     csgo_item.info()
                     break
-
                 else:
                     print("Error could not interpret user input")
                     x = input(Fore.RED +"WARNING Are you sure you want to continue?\nThis oeration can take up to several hours and aborting partway through\n will result in an incomplete dataset\ny/n?"+ Style.RESET_ALL)
@@ -237,36 +208,25 @@ def start():
             x2 = []
             y2 = []
 
-
-
             name = input("Please Enter an items name:\n")
             name = name.replace("|",'')
-
             with conn:
                 c.execute("SELECT * FROM items WHERE name=:name",{'name':name})
                 data = c.fetchall()
-
             if len(data) == 0:
                 print(Fore.RED +"Sorry could no find that item in the database\nPLEASE INCLUDE THE CONDITION IN BRACKETS\nAK-47 | Uncharted becomes\nAK-47  Uncharted (Field-Tested)"+ Style.RESET_ALL)
                 continue
-
-
             hc = False
             colour = False
             nint = 0
             for x in data:
-
                 y2.append(round((x[2]/100)*currency_json['rates'][currency],2))
-
                 x2.append(nint)
                 nint += 1
-
                 add = 0
-
                 if hc == False:
                     print("        Date        |"+"Price "+"| Volume")
                     hc = True
-
                 if colour == False:
                     print(Fore.CYAN,end='')
                     colour = True
@@ -275,15 +235,12 @@ def start():
                     colour = False
                 print(str(datetime.fromtimestamp(x[1]))+" | "+str(round((x[2]/100)*currency_json['rates'][currency],2))+" | "+str(x[3]))
                 print(Style.RESET_ALL,end='')
-
-
             fig = tpl.figure()
             fig.plot(x2, y2, label="price", width=120, height=30)
             fig.show()
             csgo_item.info()
 
         elif x == '5':
-
             print("Please Select a currency (Enter 3-Letter Tag)")
             print("1  CAD\n2  HKD\n3  ISK\n4  PHP\n5  DKK\n6  HUF\n7  CZK\n8  GBP\n9  RON\n10 SEK\n11 IDR\n12 INR\n13 BRL\n14 RUB\n15 HRK\n16 JPY\n17 THB\n18 CHF\n19 EUR\n20 MYR\n21 BGN\n22 TRY\n23 CNY\n24 NOK\n25 NZD\n26 ZAR\n27 USD\n28 MXN\n29 SGD\n30 AUD\n31 ILS\n32 KRW\n33 PLN")
             i = input("?: ")
